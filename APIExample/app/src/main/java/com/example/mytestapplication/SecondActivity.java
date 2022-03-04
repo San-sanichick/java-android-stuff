@@ -3,10 +3,13 @@ package com.example.mytestapplication;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,6 +27,7 @@ public class SecondActivity extends AppCompatActivity {
 
     private TextView nameView;
     private Button toSurfaceButton;
+    private ImageView imageView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +47,8 @@ public class SecondActivity extends AppCompatActivity {
             startActivity(i);
         });
 
+        imageView = findViewById(R.id.imageView);
+
 //        Toast.makeText(this, "ckauhfvba", Toast.LENGTH_LONG).show();
 
         getWeather(city);
@@ -52,7 +58,12 @@ public class SecondActivity extends AppCompatActivity {
         public Current current;
 
         private class Current {
-            public  int temp_c;
+            public int temp_c;
+            public Condition condition;
+
+            private class Condition {
+                public String icon;
+            }
         }
     }
 
@@ -63,14 +74,20 @@ public class SecondActivity extends AppCompatActivity {
                 HttpsURLConnection connection = (HttpsURLConnection) endPoint.openConnection();
 
                 int responseCode = connection.getResponseCode();
-//                Log.d("CODE", String.valueOf(responseCode));
+
                 if (responseCode == 200) {
                     InputStream responseBody = connection.getInputStream();
                     InputStreamReader reader = new InputStreamReader(responseBody, "UTF-8");
 
                     Weather weather = new Gson().fromJson(reader, Weather.class);
 
-                    nameView.setText(String.format("%s C", weather.current.temp_c));
+                    InputStream inputStream = new URL("https:" + weather.current.condition.icon).openStream();
+                    Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+
+                    runOnUiThread(() -> {
+                        nameView.setText(String.format("%s C", weather.current.temp_c));
+                        imageView.setImageBitmap(Bitmap.createScaledBitmap(bitmap, 400, 400, false));
+                    });
                 }
             } catch (IOException e) {
                 e.printStackTrace();
